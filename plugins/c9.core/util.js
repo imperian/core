@@ -270,6 +270,7 @@ define(function(require, exports, module) {
         var reHome = new RegExp("^" + plugin.escapeRegExp(c9.home || "/home/ubuntu"));
         plugin.normalizePath = function(path){
             if (!path || path.charAt(0) == "~") return path;
+            if (c9.home == "/") return ("/" + path.replace(/^[\/]+/, ""));
             return ("/" + path.replace(/^[\/]+/, "")).replace(reHome, "~");
         };
         
