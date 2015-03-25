@@ -275,7 +275,7 @@ define(function(require, exports, module) {
                 + md5Email + "?s=" + size + "&d="  + (defaultImage || "retro");
         };
         
-        var reHome = new RegExp("^" + plugin.escapeRegExp(c9.home || "/home/ubuntu"));
+        var reHome = new RegExp("^" + plugin.escapeRegExp(c9.home || "/home/ubuntu") + "/");
         plugin.normalizePath = function(path){
             return path && normalize(path.replace(reHome, "~"));
         };
