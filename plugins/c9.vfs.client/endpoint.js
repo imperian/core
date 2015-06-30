@@ -43,7 +43,8 @@ define(function(require, exports, module) {
         if (query.vfs)
             options.updateServers = false;
             
-        var region = query.region || options.region;
+        var strictRegion = query.region || options.strictRegion;
+        var region = strictRegion || options.region;
 
         var servers;
         var pendingServerReqs = [];
@@ -169,8 +170,11 @@ define(function(require, exports, module) {
             var servers = shuffleServers(version, vfsServers);
             
             // check for version
-            if (vfsServers.length && !servers.length)
+            if (vfsServers.length && !servers.length) {
+                if (strictRegion)
+                    return callback(fatalError("No VFS server(s) found for region " + strictRegion, "reload"));
                 return onProtocolChange(callback);
+            }
                 
             var latestServer = 0;
             var foundServer = false;
@@ -295,11 +299,20 @@ define(function(require, exports, module) {
             // I'm keeping this vague because we don't want users to blame
             // a "cloud9 update" for losing work
             deleteOldVfs();
+            metrics.increment("vfs.failed.protocol_mismatch", 1, true);
             return callback(fatalError("Protocol change detected", "reload"));
         }
 
         function shuffleServers(version, servers) {
+            // If a strict region is specified, only use that region
             servers = servers.slice();
+            if (strictRegion) {
+                servers = servers.filter(function(s) {
+                    return s.region === strictRegion;
+                });
+            }
+            // Never use staging servers if we're not on staging,
+            // even though they appear in the production VFS registry
             var isBetaClient = region === "beta";
             servers = servers.filter(function(s) {
                 var isBetaServer = s.region === "beta";

@@ -120,7 +120,9 @@ module.exports = function(options) {
             region: options.region,
             pid: options.project.id,
             servers: options.vfsServers,
-            updateServers: hosted
+            updateServers: hosted,
+            strictRegion: options.strictRegion
+                || options.mode === "beta" && "beta"
         },
         {
             packagePath: "plugins/c9.ide.auth/auth",
@@ -380,6 +382,7 @@ module.exports = function(options) {
         "plugins/c9.ide.run.debug/liveinspect",
 
         "plugins/c9.ide.run.debug.xdebug/xdebug",
+        "plugins/c9.ide.run.debug/debuggers/gdb/gdbdebugger",
         
         // Console
         {
@@ -474,12 +477,14 @@ module.exports = function(options) {
         {
             packagePath: "plugins/c9.ide.mount/ftp",
             curlftpfsBin: options.mount.curlftpfsBin,
-            fusermountBin: options.mount.fusermountBin
+            fusermountBin: options.mount.fusermountBin,
+            ssh: options.ssh
         },
         {
             packagePath: "plugins/c9.ide.mount/sftp",
             sshfsBin: options.mount.sshfsBin,
-            fusermountBin: options.mount.fusermountBin
+            fusermountBin: options.mount.fusermountBin,
+            ssh: options.ssh
         },
         {
             packagePath: "plugins/c9.ide.upload/dragdrop",
@@ -707,6 +712,9 @@ module.exports = function(options) {
             version: options.manifest.version,
             revision: options.manifest.revision
         });
+    }
+    if (!hosted) {
+        plugins.push("plugins/c9.ide.analytics/mock_analytics");
     }
     
     // Collab
