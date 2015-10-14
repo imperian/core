@@ -122,7 +122,8 @@ module.exports = function(options) {
             servers: options.vfsServers,
             updateServers: hosted,
             strictRegion: options.strictRegion
-                || options.mode === "beta" && "beta"
+                || options.mode === "beta" && "beta",
+            ignoreProtocolVersion: options.ignoreProtocolVersion,
         },
         {
             packagePath: "plugins/c9.ide.auth/auth",
@@ -218,7 +219,6 @@ module.exports = function(options) {
             nak: options.nakBin || "~/.c9/node_modules/nak/bin/nak",
             node: options.nodeBin,
             local: options.local,
-            installPath: options.installPath
         },
         {
             packagePath: "plugins/c9.ide.find.infiles/findinfiles",
@@ -258,6 +258,7 @@ module.exports = function(options) {
         "plugins/c9.ide.dialog.common/filechange",
         "plugins/c9.ide.dialog.common/fileoverwrite",
         "plugins/c9.ide.dialog.common/fileremove",
+        "plugins/c9.ide.dialog.common/info",
         "plugins/c9.ide.dialog.common/question",
         {
             packagePath: "plugins/c9.ide.dialog.common/error",
@@ -276,7 +277,7 @@ module.exports = function(options) {
         
         // VFS
         "plugins/c9.fs/proc",
-        "plugins/c9.fs/proc.apigen",
+        "plugins/c9.fs/proc.apigen", // used only by disabled deploy plugins
         "plugins/c9.fs/net",
         {
             packagePath: "plugins/c9.fs/fs",
@@ -302,10 +303,14 @@ module.exports = function(options) {
         {
             packagePath: "plugins/c9.ide.language/language",
             workspaceDir: workspaceDir,
+            staticPrefix: hosted && !options.packed
+                ? options.ideBaseUrl + "/uph" + staticPrefix
+                : staticPrefix,
             workerPrefix: options.CORSWorkerPrefix // "/static/standalone/worker"
         },
         "plugins/c9.ide.language/keyhandler",
         "plugins/c9.ide.language/complete",
+        "plugins/c9.ide.language/quickfix",
         "plugins/c9.ide.language/marker",
         "plugins/c9.ide.language/refactor",
         "plugins/c9.ide.language/tooltip",
@@ -377,6 +382,7 @@ module.exports = function(options) {
         "plugins/c9.ide.immediate/evaluator",
         "plugins/c9.ide.immediate/evaluators/browserjs",
         "plugins/c9.ide.immediate/evaluators/debugnode",
+        // "plugins/c9.ide.immediate/evaluators/bash",
         "plugins/c9.ide.run.debug/variables",
         "plugins/c9.ide.run.debug/watches",
         "plugins/c9.ide.run.debug/liveinspect",
@@ -641,7 +647,8 @@ module.exports = function(options) {
             staticPrefix: staticPrefix + "/plugins/c9.ide.help"
         },
         {
-            packagePath: "plugins/c9.ide.configuration/configure"
+            packagePath: "plugins/c9.ide.configuration/configure",
+            dashboardUrl: options.dashboardUrl,
         },
         "plugins/c9.ide.save/save",
         "plugins/c9.ide.recentfiles/recentfiles",
@@ -680,6 +687,7 @@ module.exports = function(options) {
             basePath: workspaceDir,
             local: options.local
         },
+        "plugins/c9.ide.preferences/experimental",
         {
             packagePath: "plugins/c9.ide.login/login",
             staticPrefix: staticPrefix + "/plugins/c9.ide.login",
@@ -696,7 +704,34 @@ module.exports = function(options) {
             packagePath: "plugins/c9.ide.collab/notifications/bubble",
             staticPrefix: staticPrefix + "/plugins/c9.ide.collab/notifications"
         },
+        
+        // git integration
+        "plugins/c9.ide.scm/scm",
+        "plugins/c9.ide.scm/scmpanel",
+        "plugins/c9.ide.scm/detail",
+        "plugins/c9.ide.scm/log",
+        "plugins/c9.ide.scm/git",
+        "plugins/c9.ide.scm/editor",
     ];
+    
+    if (!options.sdk) {
+        plugins.push(
+            // Test
+            "plugins/c9.ide.test/test",
+            "plugins/c9.ide.test/testpanel",
+            "plugins/c9.ide.test/testrunner",
+            {
+                packagePath: "plugins/c9.ide.test/all",
+                staticPrefix: staticPrefix + "/plugins/c9.ide.test"
+            },
+            "plugins/c9.ide.test/results",
+            "plugins/c9.ide.test/coverage",
+            "plugins/c9.ide.test/coverageview",
+            
+            "plugins/c9.ide.test.mocha/mocha"
+        );
+    }
+
     
     if (packaging || !devel) {
         plugins.push({

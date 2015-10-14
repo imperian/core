@@ -143,10 +143,12 @@ installGlobalDeps() {
 
 ############################################################################
 export C9_DIR="$HOME"/.c9
-if [[ $os == "windows" ]]; then
-    export PATH="$C9_DIR:$C9_DIR/node_modules/.bin:$PATH"
-else
-    export PATH="$C9_DIR/node/bin:$C9_DIR/node_modules/.bin:$PATH"
+if ! [[ `which npm` ]]; then
+    if [[ $os == "windows" ]]; then
+        export PATH="$C9_DIR:$C9_DIR/node_modules/.bin:$PATH"
+    else
+        export PATH="$C9_DIR/node/bin:$C9_DIR/node_modules/.bin:$PATH"
+    fi
 fi
 NPM=npm
 NODE=node
@@ -161,6 +163,10 @@ installGlobalDeps
 updateAllPackages
 updateNodeModules
 
+echo -e "c9.*\n.gitignore" >  plugins/.gitignore
+echo -e "nak\n.gitignore" >  node_modules/.gitignore
+
 echo "Success!"
-echo "run '${yellow}node server.js -p 8181 -l 0.0.0.0 -a :${resetColor}' to launch Cloud9"
-#"$NODE" server.js -p 8181 -l 0.0.0.0 -a :
+
+echo "run '${yellow}node server.js -p 8080 -a :${resetColor}' to launch Cloud9"
+

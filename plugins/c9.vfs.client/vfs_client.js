@@ -246,11 +246,16 @@ define(function(require, exports, module) {
         function showVfsError(err) {
             switch (err.action) {
                 case "dashboard":
+                    if (/Permission denied \(public key/.test(err.message))
+                        err.message = "SSH permission denied. Please review your workspace configuration.";
                     return showAlert("Workspace Error", "Unable to access your workspace", err.message, function() {
                         window.location = dashboardUrl;
                     });
                 case "reload":
                     lastError = showError(err.message + ". Please reload this window.", -1);
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, (Math.random() * 8) + 2 * 60 * 1000);
                     break;
                 default:
                     lastError = showError(err, -1);

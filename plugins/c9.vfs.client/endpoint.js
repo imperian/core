@@ -44,6 +44,7 @@ define(function(require, exports, module) {
             options.updateServers = false;
             
         var strictRegion = query.region || options.strictRegion;
+        var ignoreProtocolVersion = options.ignoreProtocolVersion;
         var region = strictRegion || options.region;
 
         var servers;
@@ -167,7 +168,7 @@ define(function(require, exports, module) {
                 return;
             }
             
-            var servers = shuffleServers(version, vfsServers);
+            servers = shuffleServers(version, vfsServers);
             
             // check for version
             if (vfsServers.length && !servers.length) {
@@ -319,21 +320,34 @@ define(function(require, exports, module) {
                 return isBetaServer === isBetaClient;
             });
             servers = servers.filter(function(s) {
-                return s.version == undefined || s.version == version;
+                return ignoreProtocolVersion || s.version == undefined || s.version == version;
             });
             return servers.sort(function(a, b) {
                 if (a.region == b.region) {
-                    if (a.load < b.load)
+                    if (a.packageVersion == b.packageVersion) {
+                        if (a.load < b.load) {
+                            return -1;
+                        } 
+                        else {
+                            return 1;
+                        }
+                    }
+                    else if (a.packageVersion > b.packageVersion) {
                         return -1;
-                    else
+                    }
+                    else {
                         return 1;
+                    }
                 }
-                else if (a.region == region)
+                else if (a.region == region) {
                     return -1;
-                else if (b.region == region)
+                }
+                else if (b.region == region) {
                     return 1;
-                else
+                }
+                else {
                     return 0;
+                }
             });
         }
 

@@ -6112,7 +6112,7 @@ apf.zmanager = function(){
             level: 100000
         },
         "popup" : {
-            level: 200000
+            level: 195000
         },
         "notifier" : {
             level: 300000
@@ -33567,6 +33567,7 @@ apf.splitbutton = function(struct, tagName) {
     this.$draw = function(){
         var _self = this;
         this.$ext = this.$pHtmlNode.appendChild(document.createElement("div"));
+        this.$ext.className = "splitbutton";
 
         var skin = this["button-skin"] || this.getAttribute("skin") || this.localName;
 
@@ -33591,6 +33592,9 @@ apf.splitbutton = function(struct, tagName) {
                 _self.$button2.$setState("Out", {});
 
                 _self.dispatchEvent("mouseout", { button: this });
+            },
+            onmousedown: function() {
+                _self.dispatchEvent("mousedown", { button: this });
             },
             onclick: function(e) {
                 _self.dispatchEvent("click");
@@ -33620,6 +33624,9 @@ apf.splitbutton = function(struct, tagName) {
                 }
 
                 _self.dispatchEvent("mouseout", { button: this });
+            },
+            onmousedown: function() {
+                _self.dispatchEvent("mousedown", { button: this });
             },
             onclick: function(e) {
                 _self.dispatchEvent("split.click", e);

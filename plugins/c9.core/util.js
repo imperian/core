@@ -275,9 +275,38 @@ define(function(require, exports, module) {
                 + md5Email + "?s=" + size + "&d="  + (defaultImage || "retro");
         };
         
-        var reHome = new RegExp("^" + plugin.escapeRegExp(c9.home || "/home/ubuntu") + "/");
+
+        var reHome, reWorkspace, homeSub;
+        plugin.$initPaths = function(home, workspaceDir) {
+            reHome = new RegExp("^" + plugin.escapeRegExp(home) + "(/|/?$)");
+            var wd = workspaceDir.replace(/\/?$/, "");
+            reWorkspace = new RegExp("^" + plugin.escapeRegExp(wd) + "(/|/?$)");
+            homeSub = "~/";
+            if (home == workspaceDir) {
+                reHome = new RegExp("^(" + plugin.escapeRegExp(home) + "|~)(/|/?$)");
+                homeSub = "/";
+                reWorkspace = null;
+            } else if (reHome.test(workspaceDir)) {
+                reWorkspace = new RegExp("^" +
+                    plugin.escapeRegExp(workspaceDir.replace(reHome, "~/")) + "(/|/?$)"
+                );
+            } else if (reWorkspace.test(home)) {
+                reHome = new RegExp("^(" + plugin.escapeRegExp(home) + "|~)(/|/?$)");
+                homeSub = home.replace(reWorkspace, "/").replace(/\/?$/, "/");
+                reWorkspace = null;
+            }
+        };
+        plugin.$initPaths(c9.home || "/home/ubuntu", c9.workspaceDir || "/");
+        
         plugin.normalizePath = function(path){
-            return path && normalize(path.replace(reHome, "~"));
+            if (!path) return "";
+            if (reHome) {
+                path = path.replace(reHome, homeSub);
+                if (reWorkspace) {
+                    path = path.replace(reWorkspace, "/");
+                }
+            }
+            return normalize(path);
         };
         
         /**
@@ -351,12 +380,12 @@ define(function(require, exports, module) {
             return cmd.replace(re, "\\$1");//.replace(/^~/, "\\~");
         };
         
-        var cloneObject = plugin.cloneObject = function(obj) {
+        var cloneObject = plugin.cloneObject = function(obj, shallow) {
             if (obj === null || typeof obj !== "object")
                 return obj;
             var copy = Array.isArray(obj) ? [] : {};
             Object.keys(obj).forEach(function(k) {
-                copy[k] = cloneObject(obj[k]);
+                copy[k] = shallow ? obj[k] : cloneObject(obj[k]);
             });
             return copy;
         };

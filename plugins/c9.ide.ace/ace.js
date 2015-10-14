@@ -618,8 +618,8 @@ define(function(require, exports, module) {
                     return isAvailable ? isAvailable(editor.ace) : true;
                 };
     
-                command.findEditor = function(editor) {
-                    if (apf.activeElement && apf.activeElement.ace && apf.activeElement.ace.isFocused())
+                command.findEditor = function(editor, e) {
+                    if (e && apf.activeElement && apf.activeElement.ace && apf.activeElement.ace.isFocused())
                         return apf.activeElement.ace;
                     return editor && editor.ace || editor;
                 };
@@ -1375,7 +1375,7 @@ define(function(require, exports, module) {
         }
         
         function getMode(syntax) {
-            syntax = (syntax || "text").toLowerCase();
+            syntax = (syntax || settings.get("project/ace/@defaultSyntax") || "text").toLowerCase();
             if (syntax.indexOf("/") == -1)
                 syntax = "ace/mode/" + syntax;
     
@@ -1671,6 +1671,11 @@ define(function(require, exports, module) {
              * @param {String}  syntax.extensions     file extensions in the form "ext1|ext2|^filename". this is case-insensitive
              */
             defineSyntax: defineSyntax,
+            
+            /**
+             * @ignore
+             */
+            getSyntaxForPath: getSyntaxForPath,
             
             /**
              * @ignore this is used by statusbar
@@ -2042,7 +2047,7 @@ define(function(require, exports, module) {
             function getOption(name, c9Session) {
                 var session = (c9Session || currentSession).session;
                 
-                if (name == "synax")
+                if (name == "syntax")
                     return session && session.syntax;
                 else if (name == "useWrapMode")
                     return session && session.getOption("wrap") !== "off";

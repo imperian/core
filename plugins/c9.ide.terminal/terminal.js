@@ -65,6 +65,13 @@ define(function(require, exports, module) {
             "dark-gray"  : ["#153649", "#FFFFFF", "#515D77", true]
         };
 
+        var themeName;
+        if (options.defaults) {
+            for (themeName in options.defaults) {
+                defaults[themeName] = options.defaults[themeName];
+            }
+        }
+                
         // Import the CSS
         ui.insertCss(require("text!./style.css"), options.staticPrefix, handle);
         
@@ -651,23 +658,27 @@ define(function(require, exports, module) {
             }
             
             function createTerminal(session, state) {
+                var queue = "";
+                var warned = false;
+                var timer = null;
+
                 function send(data) {
                     if (!(c9.status & c9.NETWORK))
                         return warnConnection();
                     
                     emit("input", { data: data, session: session });
+                    queue += data;
                     
-                    if (!queue)
-                        setTimeout(function() {
+                    if (!timer) {
+                        timer = setTimeout(function() {
+                            timer = null;
                             if (!session.connected)
                                 return warnConnection();
-
                             // Send data to stdin of tmux process
                             session.pty.write(queue);
                             queue = "";
                         }, 1);
-                    
-                    queue += data;
+                    }
                 }
                 
                 function warnConnection() {
@@ -685,9 +696,7 @@ define(function(require, exports, module) {
                 
                 // Create the terminal renderer and monitor
                 var terminal = new Aceterm(0, 0, send);
-                var queue = "";
-                var warned = false;
-
+                
                 session.terminal = terminal;
                 session.monitor = terminal.monitor;
                 session.aceSession = terminal.aceSession;

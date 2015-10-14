@@ -69,7 +69,7 @@ define(function(require, exports, module) {
                 name: "cancelBrowserAction",
                 group: "ignore",
                 bindKey: {
-                    mac: "Command-S|Cmd-R",
+                    mac: "Cmd-S|Cmd-R|Cmd-[|Cmd-]",
                     win: "Ctrl-S|Ctrl-R|Alt-Left|Alt-Right",
                     position: -10000
                 },
@@ -104,6 +104,8 @@ define(function(require, exports, module) {
         }, 500);
         
         function exec(command, editor, args, e) {
+            var sCommand = command;
+            
             if (!editor || editor.fake)
                 editor = emit("getEditor");
             
@@ -119,14 +121,16 @@ define(function(require, exports, module) {
             if (typeof command === 'string')
                 command = commands[command];
             
-            if (!command)
+            if (!command) {
+                console.warn("Could not find command ", sCommand);
                 return false;
+            }
             
             if (command.isAvailable && !command.isAvailable(editor, args, e))
-                return; //Disable commands for other contexts
+                return; // Disable commands for other contexts
 
             if (command.findEditor)
-                editor = command.findEditor(editor);
+                editor = command.findEditor(editor, e);
             
             if (editor && editor.$readOnly && !command.readOnly)
                 return false;
