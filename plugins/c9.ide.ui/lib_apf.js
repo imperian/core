@@ -2988,10 +2988,11 @@ String.prototype.trim = function(){
  * @param {Number} times Number of times to repeat the String concatenation
  * @type  {String}
  */
-String.prototype.repeat = function(times) {
-    return Array(times + 1).join(this);
-};
-
+if (!String.prototype.repeat) {
+    String.prototype.repeat = function(times) {
+        return Array(times + 1).join(this);
+    };
+}
 /*
  * Count the number of occurences of substring 'str' inside a string
  *
@@ -33555,7 +33556,9 @@ apf.splitbutton = function(struct, tagName) {
                     var diff = apf.getAbsolutePosition(split.$button2.$ext)[0]
                         - apf.getAbsolutePosition(split.$button1.$ext)[0];
 
-                    this.$ext.style.marginLeft = "-" + diff + "px";
+                    this.$ext.style.marginLeft = ~this.$ext.className.indexOf("moveleft") 
+                        ? 0
+                        : "-" + diff + "px";
                 });
                 menu.$splitInited = true;
             }
@@ -33568,6 +33571,8 @@ apf.splitbutton = function(struct, tagName) {
         var _self = this;
         this.$ext = this.$pHtmlNode.appendChild(document.createElement("div"));
         this.$ext.className = "splitbutton";
+        if (this.getAttribute("style"))
+            this.$ext.setAttribute("style", this.getAttribute("style"));
 
         var skin = this["button-skin"] || this.getAttribute("skin") || this.localName;
 
@@ -35295,8 +35300,8 @@ apf.textbox = function(struct, tagName) {
         var v;
         
         if (this.isHTMLBox) { 
-            if (this.$input.innerText)
-                v = this.$input.innerText;
+            if (this.$input.textContent)
+                v = this.$input.textContent;
             else {
                 //Chrome has a bug, innerText is cleared when display property is changed
                 v = apf.html_entity_decode(this.$input.innerHTML

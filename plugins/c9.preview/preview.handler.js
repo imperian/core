@@ -39,7 +39,13 @@ define(function(require, exports, module) {
                     session.ws = {};
     
                 req.projectSession = session.ws[ws];
-                if (!req.projectSession || !req.projectSession.expires || req.projectSession.expires <= Date.now()) {
+                
+                if (
+                    !req.projectSession || 
+                    !req.projectSession.expires || 
+                    req.projectSession.expires <= Date.now() ||
+                    req.projectSession.uid != req.user.id
+                ) {
                     req.projectSession = session.ws[ws] = {
                         expires: Date.now() + 10000
                     };
@@ -77,6 +83,7 @@ define(function(require, exports, module) {
                         }
                         req.projectSession.role = role;
                         req.projectSession.pid = project.id;
+                        req.projectSession.uid = req.user.id;
                         
                         var type = project.scm;
                         req.projectSession.type = type;
@@ -137,8 +144,8 @@ define(function(require, exports, module) {
                 
                 var path = req.params.path;
                 var url = req.proxyUrl + path;
-                if (req.session.token)
-                    url += "?access_token=" + encodeURIComponent(req.session.token.id || req.session.token);
+                if (req.user.code)
+                    url += "?access_token=" + encodeURIComponent(req.user.code);
 
                 var parsedUrl = parseUrl(url);
                 var httpModule = parsedUrl.protocol == "https:" ? https : http;
@@ -205,7 +212,8 @@ define(function(require, exports, module) {
                         } else if (body.indexOf("ENOENT") !== -1 || statusCode == 404) {
                             next(new error.NotFound("File '" + path + "' could not be found!"));
                         } else {
-                            delete req.session.ws[req.ws];
+                            if (req.session.ws)
+                                delete req.session.ws[req.ws];
                             
                             var json;
                             try {

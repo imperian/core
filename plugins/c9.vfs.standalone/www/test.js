@@ -8,6 +8,7 @@ require([
     "lib/architect/architect"
 ], function (chai, skin, events, theme, architect) {
     "use strict";
+    chai.Assertion.includeStack = true; // enable stack trace in errors
     var expect = chai.expect;
     var EventEmitter = events.EventEmitter;
 
@@ -161,7 +162,7 @@ require([
                 return prefs;
             })(),
             analytics: {
-                addTrait: function() {}
+                updateTraits: function() {}
             },
             commands: (function(){
                 var commands = {};
@@ -393,6 +394,11 @@ require([
                     return callback ? callback(null, ws) : ws;
                 }
             },
+            "preferences.experimental": {
+                addExperiment: function() {
+                    return false;
+                }
+            },
             "ace.gotoline": {},
             "ace.stripws": {
                 disable: function(){},
@@ -405,9 +411,9 @@ require([
             "dialog.fileremove": {show: function() {}},
             "dialog.fileoverwrite": {show: function() {}},
             "dialog.error": {
-                showError: function(msg) {
-                    console.warn(msg);
-                }
+                showError: function(msg) { console.warn(msg); },
+                show: function(msg) { console.warn(msg); },
+                hide: function(msg) { },
             },
             "installer": { createSession : function(){}, reinstall: function(){}, isInstalled: function(){ return true; } },
             "run.gui": { getElement : function(){} },

@@ -16,7 +16,7 @@ define(function(require, exports, module) {
         /***** Initialization *****/
         
         var plugin = new PreferencePanel("Ajax.org", main.consumes, {
-            caption: "Settings",
+            caption: "User Settings",
             form: true,
             index: 100
         });
@@ -35,7 +35,6 @@ define(function(require, exports, module) {
                 title: "Introduction",
                 position: 1,
                 node: intro = new ui.bar({
-                    height: 102,
                     "class" : "intro",
                     style: "padding:12px;position:relative;"
                 })

@@ -530,8 +530,8 @@ define(function(require, exports, module) {
                 });
             }
             
-            function cleanUp(keepElements) {
-                if (!keepElements) {
+            function cleanUp(what, otherPlugin) {
+                if (!what || ~what.indexOf("elements")) {
                     // Loop through elements
                     elements.forEach(function(element) {
                         element.destroy(true, true);
@@ -542,33 +542,37 @@ define(function(require, exports, module) {
                 }
                 
                 // Loop through events
-                events.forEach(function(eventRecord) {
-                    var event = eventRegistry[eventRecord[0]];
-                    if (!event) return; // this happens with mock plugins during testing
-                    var type = eventRecord[1];
-                    var id = eventRecord[2];
-                    var _events = event._events;
-                    var eventList = _events && _events[type];
-                    if (typeof eventList == "function") {
-                        if (eventList.listenerId == id)
-                            event.off(type, eventList);
-                    } else if (Array.isArray(eventList)) {
-                        eventList.some(function(listener) {
-                            if (listener.listenerId != id) return;
-                            event.off(type, listener);
-                            return true;
-                        });
-                    }
-                });
-                events = [];
+                if (!what || ~what.indexOf("events")) {
+                    events.forEach(function(eventRecord) {
+                        var event = eventRegistry[eventRecord[0]];
+                        if (!event) return; // this happens with mock plugins during testing
+                        if (otherPlugin && otherPlugin.name != event.name) return;
+                        var type = eventRecord[1];
+                        var id = eventRecord[2];
+                        var _events = event._events;
+                        var eventList = _events && _events[type];
+                        if (typeof eventList == "function") {
+                            if (eventList.listenerId == id)
+                                event.off(type, eventList);
+                        } else if (Array.isArray(eventList)) {
+                            eventList.some(function(listener) {
+                                if (listener.listenerId != id) return;
+                                event.off(type, listener);
+                                return true;
+                            });
+                        }
+                    });
+                    events = [];
+                    onNewEvents = {};
+                }
                 
                 // Loop through other
-                other.forEach(function(o) {
-                    o();
-                });
-                other = [];
-                
-                onNewEvents = {};
+                if (!what || ~what.indexOf("other")) {
+                    other.forEach(function(o) {
+                        o();
+                    });
+                    other = [];
+                }
             }
             
             function setAPIKey(apikey){
@@ -594,7 +598,7 @@ define(function(require, exports, module) {
                 
                 api[type].get("persistent/" + apiKey, function(err, data){
                     if (err) return callback(err);
-                    try { callback(null, JSON.stringify(data)); }
+                    try { callback(null, JSON.parse(data)); }
                     catch(e){ return callback(e); }
                 });
             }
@@ -609,7 +613,11 @@ define(function(require, exports, module) {
                 else if (context == "workspace") type = "project";
                 else throw new Error("Unsupported context: " + context);
                 
-                api[type].put("persistent/" + apiKey, { data: JSON.stringify(data) }, callback);
+                api[type].put("persistent/" + apiKey, { 
+                    body: {
+                        data: JSON.stringify(data)
+                    }
+                }, callback);
             }
             
             /***** Register and define API *****/
