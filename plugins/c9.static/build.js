@@ -239,10 +239,15 @@ function main(options, imports, register) {
             var jsonalyzer = require("../c9.ide.language.jsonalyzer/default_plugins");
             var extraPackages = [
                 "plugins/c9.ide.test.mocha/mocha_outline_worker",
-                "plugins/@smartface/smartface.language/loadInclude"
+                "plugins/@smartface/smartface.language/loadInclude",
+                "plugins/@smartface/smartface.language/warnings_worker.js",
+                "plugins/@smartface/smartface.language/plugincomplete_worker.js",
+                "plugins/@smartface/smartface.language/emptyTernPlugin"
             ];
             try {
-                extraPackages = extraPackages.concat(require("lib/salesforce.language/__worker__"));
+                extraPackages = extraPackages
+                    .concat(require("lib/salesforce.language/__worker__"))
+                    .concat(require("lib/salesforce.sync/__worker__"));
             } catch(e) {}
             // TODO find a saner method for managing files loaded in language worker
             modules = [
