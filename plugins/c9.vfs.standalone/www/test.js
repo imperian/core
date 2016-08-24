@@ -94,6 +94,9 @@ require([
                 var x = new EventEmitter();
                 return x;
             })(),
+            "vfs.log": {
+                log: function(){} 
+            },
             anims: (function(){
                 var x = new EventEmitter();
                 x.animateSplitBoxNode = function(node, opt) {
@@ -199,6 +202,8 @@ require([
                 c.exec = function(name) {
                     commands[name].exec();
                 };
+                c.getPrettyHotkey = function(name) { return "" };
+                c.getHotkey = function(name) { return "" };
                 c.getExceptionList = function(){ return []; };
                 
                 return c;
@@ -233,7 +238,7 @@ require([
                 
                 layout.initMenus = function() {};
                 layout.findParent = function(){
-                    if (!bar || bar.$amlDestroyed) {
+                    if (!bar || bar.$amlDestroyed || !bar.$ext || !bar.$ext.parentNode) {
                         bar = apf.document.documentElement.appendChild(
                             new imports.ui.bar());
                         bar.$ext.style.position = "fixed";
@@ -426,6 +431,10 @@ require([
                 show: function(msg) { console.warn(msg); },
                 hide: function(msg) { },
             },
+            "dialog.info": {
+                show: function(msg) { console.log(msg); },
+                hide: function(msg) { },
+            },
             "installer": { createSession : function(){}, reinstall: function(){}, isInstalled: function(){ return true; } },
             "run.gui": { getElement : function(){} },
             "debugger": {debug: function() {}, stop: function(){}},
@@ -437,6 +446,7 @@ require([
             "metrics": {
                 getLastPing: function() { throw Error("Not implemented"); },
                 getLastest: function() { throw Error("Not implemented"); },
+                onPingComplete: function() { throw Error("Not implemented"); },
                 log: function() {},
                 increment: function() {}
             },
@@ -521,6 +531,12 @@ require([
                 x.unregister = function(){};
                 return x;
             })(),
+            "terminal.monitor.message_view": (function(){
+                var x = new EventEmitter();
+                x.show = function(){};
+                x.hide = function(){};
+                return x;
+            })()
         });
     };
     
@@ -548,7 +564,6 @@ require([
                     if (err.missingMock.length) {
                         console.error("Missing mock services for " + err.missingMock);
                     } else {
-                        console.warn("Adding mock services for " + err.unresolved);
                         return expect.setupArchitectTest(config, architect, {
                             mockPlugins: config.unresolved,
                             existingPlugins: err.resolved
