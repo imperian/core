@@ -1,41 +1,3 @@
-/*
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- *
- */
-
-// #ifdef __AMLCODEEDITOR || __INC_ALL
-
-/**
- * Element allowing the user to type code.
- *
- * @constructor
- * @define codeeditor
- * @addnode elements
- *
- * @inherits apf.StandardBinding
- *
- * @author      Ruben Daniels (ruben AT ajax DOT org)
- * @author      Fabian Jakobs (fabian AT ajax DOT org)
- * @version     %I%, %G%
- * @since       0.1
- */
-
 define(function(require, exports, module) {
 "use strict";
 
@@ -61,7 +23,7 @@ apf.codebox = function(struct, tagName) {
     this.$childProperty = "value";
     this.value = "";
 
-    this.$draw = function(){
+    this.$draw = function() {
         // Build Main Skin
         this.$ext = this.$getExternal();
         this.$input = this.$getLayoutNode("main", "input", this.$ext);
@@ -117,7 +79,7 @@ apf.codebox = function(struct, tagName) {
             var _self = this;
             var visible = false;
             ace.renderer.on("afterRender", function() {
-                var show = !!ace.getValue()
+                var show = !!ace.getValue();
                 if (visible != show) {
                     visible = show;
                     _self.$button.style.display = visible ? "block" : "";
@@ -125,7 +87,7 @@ apf.codebox = function(struct, tagName) {
             });
             this.$button.addEventListener("click", function() {
                 ace.setValue("");
-            }, false)
+            }, false);
         }
         this.$ext.addEventListener("mousedown", function() {
             ace.focus();
@@ -148,7 +110,7 @@ apf.codebox = function(struct, tagName) {
 
         this.ace.focus();
     };
-    this.$blur = function (){
+    this.$blur = function () {
         if (!this.$ext)
             return;
 
@@ -157,8 +119,8 @@ apf.codebox = function(struct, tagName) {
             this.ace.blur();
     };
     
-    this.$enable = function(){ this.ace.setReadOnly(false); };
-    this.$disable = function(){ this.ace.setReadOnly(true); };
+    this.$enable = function() { this.ace.setReadOnly(false); };
+    this.$disable = function() { this.ace.setReadOnly(true); };
 
     this.execCommand = function(command) {
         this.ace.commands.exec(command, this.ace);
@@ -200,7 +162,7 @@ apf.codebox = function(struct, tagName) {
         return editor;
     },
 
-    this.$loadAml = function(){
+    this.$loadAml = function() {
         if (typeof this["clearbutton"] == "undefined")
             this.$setInheritedAttribute("clearbutton");
         if (typeof this["initial-message"] == "undefined")
@@ -220,4 +182,3 @@ apf.aml.setElement("codebox", apf.codebox);
 return init;
 
 });
-// #endif

@@ -284,7 +284,7 @@ define(function(require, exports, module) {
             
             function startParallelSearches (totalRunners) {
                 var attemptedServers = {}; 
-                for (var s = 0; s < servers.length && s < totalRunners; s++)  {
+                for (var s = 0; s < servers.length && s < totalRunners; s++) {
                     latestServer = s; 
                     var server = servers[s];
                     var serverHostUrl = getHostFromServerUrl(server.url);
@@ -335,17 +335,9 @@ define(function(require, exports, module) {
             });
             return servers.sort(function(a, b) {
                 if (a.region == b.region) {
-                    if (a.packageVersion == b.packageVersion) {
-                        if (a.load < b.load) {
-                            return -1;
-                        } 
-                        else {
-                            return 1;
-                        }
-                    }
-                    else if (a.packageVersion > b.packageVersion) {
+                    if (a.load < b.load) {
                         return -1;
-                    }
+                    } 
                     else {
                         return 1;
                     }
@@ -433,7 +425,7 @@ define(function(require, exports, module) {
         function saveToSessionStorage() {
             try {
                 window.sessionStorage.setItem("vfsid", lastVfs);
-            } catch(e) {
+            } catch (e) {
                 // could throw a quota exception
             }
         }

@@ -4,26 +4,25 @@
 
 
 require("c9/inline-mocha")(module);
-if (typeof define === "undefined") {
-    require("amd-loader");
-}
+require("amd-loader");
 
 var assert = require("assert");
 var fs = require("fs");
-var tmp = require("tmp");
 var http = require("http");
+var mkdirp = require("mkdirp");
 var localfs = require("vfs-local");
 var download = require("./download");
 var urlParse = require('url').parse;
 var execFile = require('child_process').execFile;
 
-describe(__filename, function(){
+describe(__filename, function() {
     this.timeout(4000);
     var base;
+    var id = 0;
 
-    beforeEach(function(next) {
+    before(function(next) {
         var that = this;
-        var vfs = localfs({root: "/"});
+        var vfs = localfs({ root: "/" });
         download({}, {
             "Plugin": function() {
                 var that = this;
@@ -33,7 +32,7 @@ describe(__filename, function(){
                 };
             },
             "vfs.cache": {
-                registerExtension: function() {  }
+                registerExtension: function() { }
             }
         }, function(err, api) {
             assert.equal(err, null);
@@ -58,14 +57,30 @@ describe(__filename, function(){
         });
     });
 
-    afterEach(function(next) {
+    after(function(next) {
         this.server.close(next);
     });
+    
+    before(cleanup);
+    after(cleanup);
+    
+    function cleanup(next) {
+        execFile("rm", ["-rf", __dirname + "/_test"], function() {
+            next();
+        });
+    }
+    
+    function tmpDir(callback) {
+        var path = __dirname + "/_test/" + id++;
+        mkdirp(path, function(err) {
+            callback(err, path);
+        });
+    }
 
     describe("download", function() {
     
         it("should download as tar", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
                 var filename = "download.tar.gz";
                 var file = fs.createWriteStream(path + "/" + filename);
@@ -76,7 +91,7 @@ describe(__filename, function(){
                     res.pipe(file);
                     
                     res.on("end", function() {
-                        execFile("tar", ["-zxvf", filename, "c9.vfs.server/download.js"], {cwd: path}, function(err, stdout, stderr) {
+                        execFile("tar", ["-zxvf", filename, "c9.vfs.server/download.js"], { cwd: path }, function(err, stdout, stderr) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/download.js", "utf8"),
@@ -90,7 +105,7 @@ describe(__filename, function(){
         });
     
         it("should download sub directory as tar", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
                 
                 var filename = "download.tar.gz";
@@ -99,7 +114,7 @@ describe(__filename, function(){
                     res.pipe(file);
                     
                     res.on("end", function() {
-                        execFile("tar", ["-zxvf", filename, "test/dir1/testdata1.txt"], {cwd: path}, function(err) {
+                        execFile("tar", ["-zxvf", filename, "test/dir1/testdata1.txt"], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir1/testdata1.txt", "utf8"),
@@ -113,7 +128,7 @@ describe(__filename, function(){
         });
     
         it("should download without specifying a name", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
                 
                 var filename = "download.tar.gz";
@@ -125,7 +140,7 @@ describe(__filename, function(){
                     res.pipe(file);
                     
                     res.on("end", function() {
-                        execFile("tar", ["-zxvf", filename, "test/dir1/testdata1.txt"], {cwd: path}, function(err) {
+                        execFile("tar", ["-zxvf", filename, "test/dir1/testdata1.txt"], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir1/testdata1.txt", "utf8"),
@@ -139,7 +154,7 @@ describe(__filename, function(){
         });
 
         it("should download several files in same directory as tar", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
 
                 var filename = "download.tar.gz";
@@ -147,7 +162,7 @@ describe(__filename, function(){
                 http.get(base + "/test/dir2/testdata2a.txt,/test/dir2/testdata2b.txt?download=download.tar.gz", function(res) {
                     res.pipe(file);
                     res.on("end", function() {
-                        execFile("tar", ["-zxvf", filename], {cwd: path}, function(err) {
+                        execFile("tar", ["-zxvf", filename], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir2/testdata2a.txt", "utf8"),
@@ -165,7 +180,7 @@ describe(__filename, function(){
         });
 
         it("should download several files in different directories as tar", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
 
                 var filename = "download.tar.gz";
@@ -173,7 +188,7 @@ describe(__filename, function(){
                 http.get(base + "/test/dir1/testdata1.txt,/test/dir2/testdata2a.txt?download=download.tar.gz", function(res) {
                     res.pipe(file);
                     res.on("end", function() {
-                        execFile("tar", ["-zxvf", filename], {cwd: path}, function(err) {
+                        execFile("tar", ["-zxvf", filename], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir1/testdata1.txt", "utf8"),
@@ -191,7 +206,7 @@ describe(__filename, function(){
         });
 
         it("should download as zip", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
                 var filename = "download.zip";
                 var file = fs.createWriteStream(path + "/" + filename);
@@ -202,7 +217,7 @@ describe(__filename, function(){
                     res.pipe(file);
 
                     res.on("end", function() {
-                        execFile("unzip", [filename, "c9.vfs.server/download.js"], {cwd: path}, function(err, stdout, stderr) {
+                        execFile("unzip", [filename, "c9.vfs.server/download.js"], { cwd: path }, function(err, stdout, stderr) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/download.js", "utf8"),
@@ -216,7 +231,7 @@ describe(__filename, function(){
         });
 
         it("should download sub directory as zip", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
 
                 var filename = "download.zip";
@@ -225,7 +240,7 @@ describe(__filename, function(){
                     res.pipe(file);
 
                     res.on("end", function() {
-                        execFile("unzip", [filename, "test/dir1/testdata1.txt"], {cwd: path}, function(err) {
+                        execFile("unzip", [filename, "test/dir1/testdata1.txt"], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir1/testdata1.txt", "utf8"),
@@ -239,7 +254,7 @@ describe(__filename, function(){
         });
 
         it("should download several files in same directory as zip", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
 
                 var filename = "download.zip";
@@ -247,7 +262,7 @@ describe(__filename, function(){
                 http.get(base + "/test/dir2/testdata2a.txt,/test/dir2/testdata2b.txt?download=download.zip", function(res) {
                     res.pipe(file);
                     res.on("end", function() {
-                        execFile("unzip", [filename], {cwd: path}, function(err) {
+                        execFile("unzip", [filename], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir2/testdata2a.txt", "utf8"),
@@ -265,7 +280,7 @@ describe(__filename, function(){
         });
 
         it("should download several files in different directories as zip", function(next) {
-            tmp.dir({unsafeCleanup: true}, function(err, path) {
+            tmpDir(function(err, path) {
                 assert.equal(err, null);
 
                 var filename = "download.zip";
@@ -273,7 +288,7 @@ describe(__filename, function(){
                 http.get(base + "/test/dir1/testdata1.txt,/test/dir2/testdata2a.txt?download=download.zip", function(res) {
                     res.pipe(file);
                     res.on("end", function() {
-                        execFile("unzip", [filename], {cwd: path}, function(err) {
+                        execFile("unzip", [filename], { cwd: path }, function(err) {
                             assert.equal(err, null);
                             assert.equal(
                                 fs.readFileSync(__dirname + "/test/dir1/testdata1.txt", "utf8"),

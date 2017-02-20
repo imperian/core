@@ -84,7 +84,7 @@ function main(argv, config, onLoaded) {
         .describe("exclude", "Exclude specified service")
         .describe("include", "Include only specified service")
         .describe("helpWithSudo", "Ask for sudo password on startup")
-        .default("domains", inContainer && process.env.C9_HOSTNAME || process.env.C9_DOMAINS)
+        .default("domains", inContainer && [process.env.C9_HOSTNAME || process.env.C9_DOMAINS, "c9.io"])
         .boolean("help")
         .describe("help", "Show command line options.");
 
@@ -206,7 +206,7 @@ function start(configName, options, callback) {
     
     architect.resolveConfig(plugins, __dirname + "/plugins", function(err, config) {
         if (err) {
-            console.error(err);
+            console.error(err.stack || err);
             process.exit(1);
         }
         
