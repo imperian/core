@@ -52,6 +52,29 @@ function plugin(options, imports, register) {
         res.end();
     });
     
+   // Example method for creating a per-user user object.
+   // This method simply unpacks the object from the __c9_uid cookie
+   // where it is assumed to have been already set (but if unset and unpacking fails
+   // the default user object will be returned).
+   //
+   // Example javascript to run in the browser for setting the __c9_uid cookie:
+   // document.cookie = '__c9_uid=' +
+   //   escape( JSON.stringify(
+   //     {id:<uid>, fullname:"<fullname>", name:"<name>", email:"<email address in lowercase>"}
+   //   )) + '; Domain=<cookie domain>; MaxAge=315360000'
+   api.identifyUser = api.identifyUser || function(req) {
+      var user = extend({}, options.options.user);
+        
+      if(req.cookies['__c9_uid']) {
+         try {
+            return extend(user, JSON.parse(unescape(req.cookies['__c9_uid'])));
+         } catch(e) {
+         }
+      }
+
+      return user;
+   };
+    
     api.get("/ide.html", {
         params: {
             workspacetype: {
@@ -101,6 +124,12 @@ function plugin(options, imports, register) {
 
         var collab = options.collab && req.params.collab !== 0 && req.params.nocollab != 1;
         var opts = extend({}, options);
+      
+        // Clone options.options and options.options.extendOptions, into opts,
+        // so as not to overwrite the defaults when api.identifyUser() is called.
+        opts.options = extend({}, opts.options);
+        opts.options.extendOptions = extend({}, opts.options.extendOptions);
+    
         opts.options.collab = collab;
         if (req.params.packed == 1)
             opts.packed = opts.options.packed = true;
@@ -114,6 +143,8 @@ function plugin(options, imports, register) {
             w: req.params.w,
             token: req.params.token
         });
+        
+        opts.options.extendOptions.user = opts.options.user = api.identifyUser(req);
         
         opts.options.debug = req.params.debug !== undefined;
         res.setHeader("Cache-Control", "no-cache, no-store");
@@ -233,6 +264,7 @@ function plugin(options, imports, register) {
     api.authenticate = api.authenticate || function() {
         return function(req, res, next) { 
             req.user = extend({}, options.options.extendOptions.user);
+            req.user = api.identifyUser(req);
             next(); 
         };
     };
@@ -262,11 +294,12 @@ function plugin(options, imports, register) {
     api.updatConfig = api.updatConfig || function(opts, params) {
         var id = params.token;
         opts.accessToken = id || "token";
-        var user = opts.extendOptions.user;
-        user.id = id || -1;
-        user.name = id ? "user" + id : "johndoe";
-        user.email = id ? "user" + id + "@c9.io" : "johndoe@example.org";
-        user.fullname = id ? "User " + id : "John Doe";
+        // Commented out so as not to overwrite 'user'.
+        // var user = opts.extendOptions.user;
+        // user.id = id || -1;
+        // user.name = id ? "user" + id : "johndoe";
+        // user.email = id ? "user" + id + "@c9.io" : "johndoe@example.org";
+        // user.fullname = id ? "User " + id : "John Doe";
         opts.workspaceDir = params.w ? params.w : options.workspaceDir;
         opts.projectName = basename(opts.workspaceDir);
         if (!options._projects) {
@@ -287,6 +320,9 @@ function plugin(options, imports, register) {
             authenticate: function() {
                 return function(req, res, next) {
                     req.user = extend({}, options.options.extendOptions.user);
+                    // It's unknown when/whether this code path is followed,
+                    // but extend to call api.identifyUser anyway.
+                    req.user = api.identifyUser(req);
                     next();
                 };
             }
