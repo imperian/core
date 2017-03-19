@@ -33,7 +33,7 @@ define(function(require, exports, module) {
         
         var resetSettings = options.reset || c9.location.match(/reset=([\w\|]*)/) && RegExp.$1;
         var develMode = c9.location.indexOf("devel=1") > -1;
-        var debugMode = c9.location.indexOf("debug=2") > -1;
+        var debugMode = c9.location.indexOf("debug=2") > -1; 
         var testing = options.testing;
         var debug = options.debug;
         
@@ -56,6 +56,13 @@ define(function(require, exports, module) {
         var diff = 0; // TODO should we allow this to be undefined and get NaN in timestamps?
         var userData;
         
+        var skipCloud = {};
+        c9.location.replace(/[&?](state|project|user)=([\w]+)/g, function(_, type, val) {
+            if (!val) return;
+            PATH[type] = PATH[type].replace(/.settings$/, function() { return "." + val + ".settings"; });
+            skipCloud[type] = true;
+        });
+        
         var inited = false;
         function loadSettings(json) {
             if (!json) {
@@ -71,40 +78,36 @@ define(function(require, exports, module) {
                     
                     for (var type in json) {
                         if (typeof json[type] == "string") {
-                            if (json[type].charAt(0) == "<") {
+                            try {
+                                json[type] = JSON.parse(json[type]);
+                            } catch (e) {
                                 json[type] = TEMPLATE[type];
-                            }
-                            else {
-                                try {
-                                    json[type] = JSON.parse(json[type]);
-                                } catch (e) {
-                                    json[type] = TEMPLATE[type];
-                                }
                             }
                         }
                     }
                 }
-        
-                if (!json) {
-                    var info = {};
-                    var count = KEYS.length;
-                    
-                    KEYS.forEach(function(type) {
-                        fs.readFile(PATH[type], function(err, data) {
-                            try {
-                                info[type] = err ? {} : JSON.parse(data);
-                            } catch (e) {
-                                console.error("Invalid Settings Read for ", 
-                                    type, ": ", data);
-                                info[type] = {};
-                            }
-                            
-                            if (--count === 0)
-                                loadSettings(info);
-                        });
+                
+                var count = KEYS.length;
+                
+                KEYS.forEach(function(type) {
+                    if (!skipCloud[type] && json)
+                        return --count;
+                    fs.readFile(PATH[type], function(err, data) {
+                        if (!json) json = {};
+                        try {
+                            json[type] = err ? {} : JSON.parse(data);
+                        } catch (e) {
+                            console.error("Invalid Settings Read for ", 
+                                type, ": ", data);
+                            json[type] = {};
+                        }
+                        
+                        if (--count === 0)
+                            loadSettings(json);
                     });
+                });
+                if (count > 0)
                     return;
-                }
             }
             
             read(json);
@@ -174,7 +177,7 @@ define(function(require, exports, module) {
                     if (!node) return;
                     
                     // Get XML string
-                    var json = util.stableStringify(node, 0, "    ");
+                    var json = util.stableStringify(node, null, type == "state" ? "" : 4);
                     if (cache[type] == json) return; // Ignore if same as cache
                     
                     // Set Cache
@@ -189,10 +192,10 @@ define(function(require, exports, module) {
                     // Detect whether we're in standalone mode
                     var standalone = !options.hosted;
                     
-                    if (standalone || type == "project") {
+                    if (standalone || type == "project" || skipCloud[type]) {
                         fs.writeFile(PATH[type], json, forceSync, function(err) {});
                         
-                        if (standalone && !saveToCloud[type])
+                        if (standalone && !saveToCloud[type] || skipCloud[type])
                             return; // We're done
                     }
                     
@@ -234,7 +237,7 @@ define(function(require, exports, module) {
                 });
             }
     
-            if (!c9.debug) {
+            if (!c9.debug && !testing) {
                 try {
                     emit("read", {
                         model: model,
@@ -242,6 +245,8 @@ define(function(require, exports, module) {
                         reset: isReset
                     });
                 } catch (e) {
+                    console.error("Error loading settings, reseting to defaults");
+                    console.error(e);
                     fs.writeFile(PATH.project 
                         + ".broken", JSON.stringify(json), function() {});
     
