@@ -17,7 +17,6 @@ define(function(require, exports, module) {
         var workspace = imports["collab.workspace"];
 
         var css = require("text!./notifications.css");
-        var staticPrefix = options.staticPrefix;
 
         var oop = require("ace/lib/oop");
         var Tree = require("ace_tree/tree");
@@ -45,7 +44,7 @@ define(function(require, exports, module) {
             loaded = true;
 
             // Needed now for bubble
-            ui.insertCss(css, staticPrefix, plugin);
+            ui.insertCss(css, null, plugin);
             
             notificationsDataProvider = new TreeData();
 
@@ -174,7 +173,7 @@ define(function(require, exports, module) {
             
             if (bubble) {
                 if (count) {
-                    bubble.innerHTML = count;
+                    bubble.textContent = count;
                     bubble.style.display = "block";
                     bubble.className = "newnotifs size" + String(count).length;
                 } else {

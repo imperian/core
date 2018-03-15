@@ -16,6 +16,7 @@ define(function(require, exports, module) {
         var css = require("text!./upload_progress.css");
         var TreeData = require("ace_tree/data_provider");
         var Tree = require("ace_tree/tree");
+        var escapeHTML = require("ace/lib/lang").escapeHTML;
         
         var boxUploadActivityMarkup = require("text!./markup/box_upload_activity.xml");
         
@@ -41,14 +42,12 @@ define(function(require, exports, module) {
             drawn = true;
             
             // load CSS
-            ui.insertCss(css, options.staticPrefix, plugin);
+            ui.insertCss(css, null, plugin);
             
             // Import Skin
             ui.insertSkin({
                 name: "uploadfiles",
                 data: require("text!./markup/skin.xml"),
-                "media-path": options.staticPrefix + "/images/",
-                "icon-path": options.staticPrefix + "/icons/"
             }, plugin);
             
             // Create UI elements
@@ -60,7 +59,7 @@ define(function(require, exports, module) {
                 var p = treeContainer.parentNode;
                 var box = new ui.vsplitbox({
                     id: "vboxTreeContainer",
-                    style: "position:relative;flex:1;-webkit-flex:1",
+                    style: "position:relative;flex:1",
                     splitter: false
                 });
                 p.insertBefore(box, treeContainer);
@@ -79,10 +78,10 @@ define(function(require, exports, module) {
             mdlUploadActivity.rowHeightInner = 20;
             mdlUploadActivity.getContentHTML = function(node) {
                 return "<span class='uploadactivity-caption'>"
-                    + node.label
+                    + escapeHTML(node.label)
                     + "</span>"
                     + "<span class='uploadactivity-progress'>"
-                    + (node.progress == undefined ? "&nbsp;" : node.progress + "%") + "</span>"
+                    + (node.progress == undefined ? "&nbsp;" : escapeHTML(node.progress + "%")) + "</span>"
                     + "<span class='uploadactivity-delete'>&nbsp;</span>";
             };
             mdlUploadActivity.updateProgress = function(node, val) {

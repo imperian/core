@@ -20,13 +20,8 @@ require(["lib/architect/architect", "lib/chai/chai"], function (architect, chai)
         "plugins/c9.vfs.client/vfs_client",
         "plugins/c9.vfs.client/endpoint",
         "plugins/c9.ide.auth/auth",
+        "plugins/c9.core/api",
         
-        //Mock Plugins
-        {
-            consumes: ["Plugin"],
-            provides: ["auth.bootstrap", "info", "dialog.error"],
-            setup: expect.html.mocked
-        },
         {
             consumes: ["net", "proc"],
             provides: [],
@@ -77,6 +72,6 @@ require(["lib/architect/architect", "lib/chai/chai"], function (architect, chai)
             });
         });
         
-        onload && onload();
+        register();
     }
 });

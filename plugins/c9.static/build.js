@@ -50,6 +50,9 @@ function main(options, imports, register) {
     }
 
     function readConfig(config) {
+        if (typeof config != "string")
+            return config;
+        
         if (config == "full") {
             var plugins = [];
             ["default-local", "ssh", "default"].forEach(function(n) {
@@ -114,45 +117,29 @@ function main(options, imports, register) {
         var data = readConfig(config);
         if (data.error) 
             return callback(data.error);
+                
+        build(data.config, {
+            sources: data.sources,
+            cache: cache,
+            pathConfig: pathConfig,
+            enableBrowser: true,
+            includeConfig: false,
+            noArchitect: true,
+            compress: compress,
+            filter: [],
+            ignore: [],
+            withRequire: false,
+            compileLess: true,
+            lessLibs: [
+                "plugins/c9.ide.layout.classic/less/lesshat.less",
+                "plugins/c9.ide.layout.classic/themes/default-" + color + ".less",
+                "plugins/c9.ide.layout.classic/themes/" + color + ".less"
+            ],
+            staticPrefix: "plugins/c9.ide.layout.classic",
+            lessLibCacheKey: color,
+            basepath: pathConfig.root,
+        }, callback);
         
-        var plugins = data.config.concat(sharedModules());
-        var lessLibs = [];
-        
-        fs.readFile(path.join(pathConfig.root, "plugins/c9.ide.layout.classic/less/lesshat.less"), "utf8", function(err, lesshat) {
-            if (err) return callback(err);
-            
-            lessLibs.push(lesshat);
-            
-            fs.readFile(path.join(pathConfig.root, "plugins/c9.ide.layout.classic/themes/default-" + color + ".less"), "utf8", function(err, theme) {
-                if (err) return callback(err);
-                
-                lessLibs.push(theme);
-                
-                lessLibs.staticPrefix = "plugins/c9.ide.layout.classic";
-                
-                var themeCss = [{
-                    id: "text!" + "plugins/c9.ide.layout.classic/themes/" + color + ".less",
-                    parent: {}
-                }];
-                
-                build(plugins, {
-                    cache: cache,
-                    pathConfig: pathConfig,
-                    enableBrowser: true,
-                    includeConfig: false,
-                    noArchitect: true,
-                    compress: compress,
-                    filter: [],
-                    ignore: [],
-                    withRequire: false,
-                    compileLess: true,
-                    lessLibs: lessLibs,
-                    lessLibCacheKey: color,
-                    basepath: pathConfig.root,
-                    additional: themeCss
-                }, callback);
-            });
-        });
     }
     
     function buildAce(module, pathConfig, callback, aceModuleIgnores) {
@@ -216,7 +203,14 @@ function main(options, imports, register) {
         if (/^(ace\/|plugins\/c9.ide.ace)/.test(module))
             return buildAce(module, pathConfig, callback);
         
-        build([], {
+        var compileForNode = false;
+        if (/^~node\//.test(module)) {
+            module = module.substring(6);
+            compileForNode = true;
+        }
+        
+        build(compileForNode ? [module] : [], {
+            node: compileForNode,
             cache: cache,
             pathConfig: pathConfig,
             enableBrowser: true,
@@ -225,11 +219,11 @@ function main(options, imports, register) {
             compress: compress,
             filter: [],
             ignore: [],
-            additional: [{
+            additional: compileForNode && [{
                 id: module,
                 noDeps: true
             }],
-            withRequire: false,
+            withRequire: compileForNode,
             basepath: pathConfig.root
         }, callback);
     }

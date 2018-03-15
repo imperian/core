@@ -29,7 +29,6 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
             packagePath: "plugins/c9.core/settings",
             testing: true
         },
-        "plugins/c9.core/api.js",
         {
             packagePath: "plugins/c9.ide.ui/ui",
             staticPrefix: "plugins/c9.ide.ui"
@@ -56,23 +55,13 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
         },
         "plugins/c9.vfs.client/endpoint",
         "plugins/c9.ide.auth/auth",
+        "plugins/c9.core/api",
         {
             packagePath: "plugins/c9.fs/fs",
             baseProc: baseProc
         },
         "plugins/c9.fs/fs.cache.xml",
         
-        // Mock plugins
-        {
-            consumes: ["apf", "ui", "Plugin"],
-            provides: [
-                "commands", "menus", "commands", "layout", "watcher", "save", 
-                "anims", "tree", "preferences", "clipboard", "dialog.alert",
-                "dialog.question", "dialog.file", "dialog.fileoverwrite",
-                "auth.bootstrap", "ace.stripws", "proc", "info", "dialog.error"
-            ],
-            setup: expect.html.mocked
-        },
         {
             consumes: ["tabManager", "save", "fs", "autosave", "settings"],
             provides: [],
@@ -113,9 +102,6 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
             this.timeout(5000);
             
             before(function(done) {
-                apf.config.setProperty("allow-select", false);
-                apf.config.setProperty("allow-blur", false);
-                
                 tabs.once("ready", function() {
                     tabs.getPanes()[0].focus();
                     var path = "/autosave1.txt";
@@ -175,6 +161,6 @@ require(["lib/architect/architect", "lib/chai/chai", "/vfs-root"],
             }
         });
         
-        onload && onload();
+        register();
     }
 });

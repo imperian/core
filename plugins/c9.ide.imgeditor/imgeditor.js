@@ -37,8 +37,7 @@ define(function(require, exports, module) {
             drawn = true;
             
             // Insert CSS
-            ui.insertCss(require("text!./style.css"), 
-                options.staticPrefix, handle);
+            ui.insertCss(require("text!./style.css"), null, handle);
         };
         
         // @todo revert to saved doesnt work (same for file watcher reload)
@@ -305,7 +304,6 @@ define(function(require, exports, module) {
                     ? path
                     : vfs.url(path);
                     
-                // editor.setProperty("value", apf.escapeXML(fullpath));
                 loadCanvas(doc.tab, fullpath, callback);
             }
             

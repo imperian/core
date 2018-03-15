@@ -49,12 +49,17 @@ define(function(require, exports, module) {
                     else
                         skins = skins ? skins.split(/,\s*/) : [];
                     
-                    build.buildConfig(config, pathConfig, save(["config", path.basename(config) + ".js"], function next(err) {
-                        if (err) return done(err);
-                        var skin = skins.pop();
-                        if (!skin) return buildConfig();
-                        build.buildSkin(config, skin, pathConfig, save(["skin", config, skin + ".css"], next));
-                    }), function(configName, data) {
+                    build.buildConfig(config, pathConfig, function(err, result) {
+                        save(["config", path.basename(config) + ".js"], function next(err) {
+                            if (err) return done(err);
+                            var skin = skins.pop();
+                            if (!skin) return buildConfig();
+                            build.buildSkin({
+                                sources: result.sources,
+                                config: [],
+                            }, skin, pathConfig, save(["skin", config, skin + ".css"], next));
+                        })(err, result)
+                    }, function(configName, data) {
                         var pluginPaths = data.map(function(p) {
                             return typeof p == "string" ? p : p.packagePath;
                         }).filter(Boolean).sort();
@@ -171,7 +176,7 @@ define(function(require, exports, module) {
             
             // FIXME: this could be resolved via pathConfig:
             var pathMap = {
-                "ace": __dirname + "/../../node_modules/ace/lib/ace",
+                "ace": __dirname + "/../node_modules/ace/lib/ace",
                 "plugins": __dirname + "/../../plugins",
                 "plugins/salesforce.language": __dirname + "/../../node_modules/salesforce.language",
                 "plugins/salesforce.sync": __dirname + "/../../node_modules/salesforce.sync"

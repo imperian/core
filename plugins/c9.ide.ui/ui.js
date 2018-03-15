@@ -24,31 +24,10 @@ define(function(require, module, exports) {
             loaded = true;
             apf.uiLoaded = true;
             
-            // Before we have Proxy Objects, we'll extend the apf objects with the needed api
-            apf.Class.prototype.on = function() {
-                this.addEventListener.apply(this, arguments);
-            };
-            apf.Class.prototype.once = function(name, listener) {
-                var _self = this;
-                function callback() {
-                    listener.apply(this, arguments);
-                    _self.removeEventListener(name, callback);
-                }
-                this.addEventListener(name, callback);
-            };
-            apf.Class.prototype.emit = apf.Class.prototype.dispatchEvent;
-            apf.Class.prototype.off = apf.Class.prototype.removeEventListener;
-            
-            Object.defineProperty(apf.Class.prototype, '$html', {
-                get: function() { return this.$int || this.$container || this.$ext; },
-                enumerable: false,
-                configurable: false
-            });
-            
             apf.preProcessCSS = insertLess;
             
             // Load a basic document into APF
-            apf.initialize('<a:application xmlns:a="http://ajax.org/2005/aml" />');
+            apf.initialize();
             
             window.addEventListener("mousedown", function() {
                 apf.isMousePressed = true;
@@ -102,18 +81,19 @@ define(function(require, module, exports) {
                         }
                     }
                     
-                    oldHandler.call(_self, func(value));
-                    
+                    if (isDynProp) {
+                        oldHandler.call(_self, func(value));
+                        settings.on(value, listen);
+                        
+                        this.once("DOMNodeRemovedFromDocument", function() {
+                            settings.off(value, listen);
+                        });
+                    }
                     function listen() { 
                         var v = func(value);
                         if (_self[prop] != v) 
                             oldHandler.call(_self, v); 
                     }
-                    settings.on(value, listen);
-                    
-                    this.once("DOMNodeRemovedFromDocument", function() {
-                        settings.off(value, listen);
-                    });
                 };
             }
             wrap(apf.item.prototype, "checked", false);
@@ -144,13 +124,6 @@ define(function(require, module, exports) {
             plugin.addOther(function() {
                 cssLibs.splice(cssLibs.indexOf(css), 1);
             });
-        }
-        
-        function createStyleSheet(css) {
-            var style = document.createElement("style");
-            style.appendChild(document.createTextNode(css));
-            document.getElementsByTagName("head")[0].appendChild(style);
-            return style;
         }
         
         function insertLess(css, filename, staticPrefix, _callback, force) {
@@ -186,7 +159,7 @@ define(function(require, module, exports) {
                         return callback(e);
                         
                     // Add css to the DOM
-                    var style = createStyleSheet(tree.toCSS({
+                    var style = apf.importCssString(tree.toCSS({
                         relativeUrls: true,
                         rootpath: staticPrefix || ""
                     }));
@@ -222,7 +195,7 @@ define(function(require, module, exports) {
                 if (!packed && packedThemes && staticPrefix !== false) {
                     return;
                 }
-                var style = createStyleSheet(css);
+                var style = apf.importCssString(css);
                 
                 // Cleanup
                 plugin.addOther(function() {
@@ -594,6 +567,10 @@ define(function(require, module, exports) {
              */
             insertByIndex: insertByIndex,
             
+            /**
+             * 
+             */
+            buildDom: apf.buildDom,
             
             /**
              * Escapes "&amp;", greater than, less than signs, quotation marks, 

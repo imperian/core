@@ -73,7 +73,7 @@ define(function(require, exports, module) {
         }
                 
         // Import the CSS
-        ui.insertCss(require("text!./style.css"), options.staticPrefix, handle);
+        ui.insertCss(require("text!./style.css"), null, handle);
         
         handle.on("load", function() {
             commands.addCommand({
@@ -249,8 +249,8 @@ define(function(require, exports, module) {
                     ["selectionColor", colors[2]],
                     ["antialiasedfonts", colors[3]],
                     ["fontfamily", "Ubuntu Mono, Menlo, Consolas, monospace"], // Monaco, 
-                    ["fontsize", "12"],
-                    ["blinking", "false"],
+                    ["fontsize", 12],
+                    ["blinking", false],
                     ["scrollback", 1000]
                 ]);
                 
@@ -261,13 +261,20 @@ define(function(require, exports, module) {
             
             layout.on("themeChange", function(e) {
                 setSettings();
-                
-                var colors = defaults[e.oldTheme];
-                if (!colors) return;
-                if (!(settings.get("user/terminal/@backgroundColor") == colors[0] &&
-                  settings.get("user/terminal/@foregroundColor") == colors[1] &&
-                  settings.get("user/terminal/@selectionColor") == colors[2] &&
-                  settings.get("user/terminal/@antialiasedfonts") == colors[3]))
+            });
+
+            layout.on("validateThemeChange", function(e) {
+                var oldColors = defaults[e.oldTheme];
+                var newColors = defaults[e.theme];
+                var colors = [
+                    settings.get("user/terminal/@backgroundColor"),
+                    settings.get("user/terminal/@foregroundColor"),
+                    settings.get("user/terminal/@selectionColor"),
+                    settings.get("user/terminal/@antialiasedfonts"),
+                ];
+                var matchesOldTheme = oldColors && oldColors.toString() == colors.toString();
+                var matchesNewTheme = newColors && newColors.toString() == colors.toString();
+                if (!matchesOldTheme && !matchesNewTheme)
                     return false;
             });
             

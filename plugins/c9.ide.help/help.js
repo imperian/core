@@ -110,15 +110,13 @@ define(function(require, exports, module) {
             ui.insertSkin({
                 name: "help-skin",
                 data: require("text!./skin.xml"),
-                "media-path": options.staticPrefix + "/images/",
-                "icon-path": options.staticPrefix + "/icons/"
             }, plugin);
             
             // Import CSS
-            ui.insertCss(css, options.staticPrefix, plugin);
+            ui.insertCss(css, null, plugin);
             
             // Create UI elements
-            ui.insertMarkup(null, markup, plugin);
+            ui.insertMarkup(null, markup.replace(/{YEAR}/g, new Date().getFullYear()), plugin);
             
             aboutDialog = plugin.getElement("aboutDialog");
         
@@ -133,8 +131,7 @@ define(function(require, exports, module) {
             aboutDialog.show();
             // shorten commit hash in c9.version
             var version = c9.version.replace(/([a-f\d]{10})[a-f\d]{30}/, "$1");
-            document.getElementById("c9Version").innerHTML 
-                = ui.escapeXML("Version " + version);
+            document.getElementById("c9Version").textContent = "Version " + version;
         }
 
         /***** Lifecycle *****/

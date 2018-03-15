@@ -36,7 +36,7 @@ define(function(require, exports, module) {
         
         var basename = require("path").basename;
         
-        var extensions = ["pdf", "swf"];
+        var extensions = ["pdf", "swf", "mov", "mp3", "mp4", "mpg", "ogg", "webm", "wma"];
         
         var previewUrl = options.previewUrl.replace(/^[/]/, function() {
             return c9.location.replace(/^(\w+:[/]+[^/#?]+).*/, "$1/");
@@ -286,7 +286,7 @@ define(function(require, exports, module) {
             
             // Import CSS
             var css = require("text!./preview.css");
-            ui.insertCss(css, options.staticPrefix, handle);
+            ui.insertCss(css, null, handle);
             
             handleEmit.sticky("draw");
         }
@@ -593,7 +593,7 @@ define(function(require, exports, module) {
                                                 new ui.button({
                                                     id: "btnMode",
                                                     submenu: menu.aml,
-                                                    icon: "page_white.png",
+                                                    icon: true,
                                                     skin: "btn-switcher",
                                                     caption: "browser"
                                                 })
