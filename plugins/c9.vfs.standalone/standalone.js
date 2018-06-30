@@ -117,6 +117,11 @@ function plugin(options, imports, register) {
                 source: "query",
                 optional: true
             },
+            settings: {
+                type: "number",
+                source: "query",
+                optional: true
+            },
         }
     }, function(req, res, next) {
 
@@ -147,11 +152,18 @@ function plugin(options, imports, register) {
         opts.options.extendOptions.user = opts.options.user = api.identifyUser(req);
         
         opts.options.debug = req.params.debug !== undefined;
+        var workspaceSettings = getSettings(configName, options);
+        
         res.setHeader("Cache-Control", "no-cache, no-store");
+        
+        if (req.params.settings == 1)
+            return res.json(workspaceSettings);
+        
         if (req.params.config == 1)
-            return res.json(getConfig(configName, opts));
+            return res.json(getConfig(configName, workspaceSettings));
+        
         res.render(__dirname + "/views/standalone.html.ejs", {
-            architectConfig: getConfig(configName, opts),
+            architectConfig: getConfig(configName, workspaceSettings),
             configName: configName,
             packed: opts.packed,
             standalone: true,
@@ -246,14 +258,14 @@ function plugin(options, imports, register) {
         var base = __dirname + "/../../";
         var blacklistfile = base + "/test/blacklist.txt";
         var filefinder = require(base + "/test/lib/filefinder.js");
-        filefinder.find(base, "plugins", ".*_test.js", blacklistfile, function(err, result) {
+        filefinder.find(base, "plugins", ".*_test.(js|ts)", blacklistfile, function(err, result) {
             result.all = result.list.concat(result.blacklist);
-            async.filterSeries(result.list, function(file, next) {
-                fs.readFile(base + file, "utf8", function(err, file) {
+            async.filterSeries(result.list, function(path, next) {
+                fs.readFile(base + path, "utf8", function(err, file) {
                     if (err) return next(false);
                     if (file.match(/^"use server"/m) && !file.match(/^"use client"/m))
                         return next(false);
-                    next(file.match(/^define\(|^require\(\[/m));
+                    next(file.match(/^define\(|^require\(\[/m) || /c9\.(ide|fs)/.test(path));
                 });
             }, function(files) {
                 result.list = files;
@@ -362,9 +374,7 @@ function getConfigName(requested, options) {
     return name;
 }
 
-function getConfig(configName, options) {
-    var filename = __dirname + "/../../configs/client-" + configName + ".js";
-
+function getSettings(configName, options) {
     var installPath = options.settingDir || options.installPath || "";
     var workspaceDir = options.options.workspaceDir;
     var settings = {
@@ -383,6 +393,14 @@ function getConfig(configName, options) {
         settings[type] = data;
     }
     options.options.settings = settings;
-    
-    return require(filename)(options.options);
+    options.options.configName = configName;
+    options.options.manifest = {
+        version: options.options.manifest.version
+    };
+    return options.options;
+}
+
+function getConfig(configName, options) {    
+    var filename = __dirname + "/../../configs/client-" + configName + ".js";
+    return require(filename)(options);
 }
